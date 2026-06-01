@@ -1,0 +1,2923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《摄影基础》刷题系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eaeaea;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .stat-item {
+            margin: 5px 10px;
+            font-size: 16px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .question {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .question-text {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .option {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .option:hover:not(.disabled-option) {
+            background: #f0f5ff;
+            border-color: #a0c1ff;
+        }
+        .correct {
+            background-color: #e6f7e6;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+        .incorrect {
+            background-color: #ffe6e6;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        .disabled-option {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .explanation-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f0f4f8;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.5;
+            display: none;
+        }
+        .explanation-box.show {
+            display: block;
+        }
+        .explanation-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .prev-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .prev-btn:hover:not(:disabled) {
+            background: #5a6268;
+        }
+        .next-btn {
+            background: #007bff;
+            color: white;
+        }
+        .next-btn:hover:not(:disabled) {
+            background: #0069d9;
+        }
+        .shuffle-btn {
+            background: #ffc107;
+            color: #212529;
+        }
+        .shuffle-btn:hover:not(:disabled) {
+            background: #e0a800;
+        }
+        .restart-btn {
+            background: #28a745;
+            color: white;
+        }
+        .restart-btn:hover:not(:disabled) {
+            background: #218838;
+        }
+        .exit-review-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .exit-review-btn:hover {
+            background: #c82333;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .hidden {
+            display: none;
+        }
+        .set-indicator {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        .mode-badge {
+            display: inline-block;
+            background: #17a2b8;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>《摄影基础》刷题系统</h1>
+            <p>判断题练习与测试</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-item">总题数: <span id="total-questions" class="highlight">0</span></div>
+            <div class="stat-item">已答: <span id="answered" class="highlight">0</span></div>
+            <div class="stat-item">剩余: <span id="remaining" class="highlight">0</span></div>
+            <div class="stat-item">答对: <span id="correct" class="highlight">0</span></div>
+            <div class="stat-item">答错: <span id="incorrect" class="highlight">0</span></div>
+        </div>
+
+        <div id="mode-indicator" class="set-indicator">
+            模式: <span id="mode-text">正常练习</span>
+        </div>
+
+        <div id="question-container">
+            <!-- 题目将动态生成 -->
+        </div>
+
+        <div class="set-indicator">
+            第 <span id="current-set">1</span> 组 / 共 <span id="total-sets">0</span> 组
+        </div>
+
+        <div class="navigation">
+            <button id="prev-btn" class="prev-btn" disabled>上一组</button>
+            <button id="shuffle-btn" class="shuffle-btn">随机顺序</button>
+            <button id="restart-btn" class="restart-btn">重做错题</button>
+            <button id="exit-review-btn" class="exit-review-btn hidden">退出复习</button>
+            <button id="next-btn" class="next-btn">下一组</button>
+        </div>
+    </div>
+
+    <script>
+        // ---------- 题库数据（增加解析字段） ----------
+        const questionBank = [
+    {
+        id: 1,
+        text: "我们日常接触的数码相机大体分为单反和卡片两类。",
+        answer: true,
+        explanation: "教案明确：可接触的数码相机大体分为单反数码相机、卡片数码相机两类。"
+    },
+    {
+        id: 2,
+        text: "数码单反相机的全称是单镜头反光数码相机。",
+        answer: true,
+        explanation: "教案：数码单反相机指单镜头反光数码相机。"
+    },
+    {
+        id: 3,
+        text: "单反相机实现“所见即所得”依靠的是反光镜+五棱镜。",
+        answer: true,
+        explanation: "教案：单反通过反光镜和五棱镜实现“所见即所得”取景。"
+    },
+    {
+        id: 4,
+        text: "按下单反快门时，反光板会抬起。",
+        answer: true,
+        explanation: "教案：拍摄时反光镜抬起，光线直达感光元件。"
+    },
+    {
+        id: 5,
+        text: "目前相机厂商基本停止更新单反产品线，全面转向无反。",
+        answer: true,
+        explanation: "教案：各厂商已基本停止更新单反，全面转向无反相机。"
+    },
+    {
+        id: 6,
+        text: "无反相机（微单）的核心特点是取消反光板与光学取景器。",
+        answer: true,
+        explanation: "教案：微单取消反光板和光学取景器，结构更紧凑。"
+    },
+    {
+        id: 7,
+        text: "索尼A7系列属于全画幅微单系列。",
+        answer: true,
+        explanation: "教案：全画幅微单包含索尼A7、佳能R、尼康Z、松下S系列。"
+    },
+    {
+        id: 8,
+        text: "固定镜头相机的核心特点是一体化设计，镜头不可换。",
+        answer: true,
+        explanation: "教案：固定镜头相机特点是镜头不可更换，一体化设计。"
+    },
+    {
+        id: 9,
+        text: "教案中被称为“街拍神器”的是理光GR III/IIIx。",
+        answer: true,
+        explanation: "教案：理光GR III/IIIx（APS-C）被称为街拍神器。"
+    },
+    {
+        id: 10,
+        text: "数码相机成像依靠的核心元件是光电传感器。",
+        answer: true,
+        explanation: "教案：数码相机用光电传感器捕捉图像，不用胶卷。"
+    },
+    {
+        id: 11,
+        text: "光电传感器记录的光信号最终转换成数字信号。",
+        answer: true,
+        explanation: "教案：光信号经处理器转为数字信号存储。"
+    },
+    {
+        id: 12,
+        text: "明基属于国产相机品牌。",
+        answer: true,
+        explanation: "教案：国产相机品牌包括爱国者、明基、海尔。"
+    },
+    {
+        id: 13,
+        text: "佳能属于国外相机品牌。",
+        answer: true,
+        explanation: "教案：国外品牌包含佳能、尼康、索尼、富士、奥林巴斯、哈苏。"
+    },
+    {
+        id: 14,
+        text: "光学取景无延迟是微单相比单反的优势。",
+        answer: false,
+        explanation: "教案：光学取景无延迟是单反优势，不是微单优势。"
+    },
+    {
+        id: 15,
+        text: "卡片相机的衡量标准包含专业大体积。",
+        answer: false,
+        explanation: "教案：卡片机以小巧、轻便、超薄为标准。"
+    },
+    {
+        id: 16,
+        text: "佳能EOS 850D属于单反入门级。",
+        answer: true,
+        explanation: "教案：入门级：佳能850D、尼康D5600。"
+    },
+    {
+        id: 17,
+        text: "佳能EOS-1D X Mark III属于专业单反。",
+        answer: true,
+        explanation: "教案：专业级：佳能1D X Mark III、尼康D6。"
+    },
+    {
+        id: 18,
+        text: "富士X100V属于固定镜头相机。",
+        answer: true,
+        explanation: "教案：富士X100V属于固定镜头高端便携机。"
+    },
+    {
+        id: 19,
+        text: "索尼RX10系列属于长焦相机。",
+        answer: true,
+        explanation: "教案：索尼RX10系列是1英寸传感器长焦相机。"
+    },
+    {
+        id: 20,
+        text: "数码相机的数字信号可以存储在胶卷中。",
+        answer: false,
+        explanation: "教案：数字信号可存于存储器、电脑、磁盘，不使用胶卷。"
+    },
+    {
+        id: 21,
+        text: "单反相机结构复杂、体积大的原因是内置反光镜与五棱镜。",
+        answer: true,
+        explanation: "教案：单反内部有反光镜+五棱镜，结构复杂体积大。"
+    },
+    {
+        id: 22,
+        text: "微单结构紧凑的根本原因是取消反光板和五棱镜。",
+        answer: true,
+        explanation: "教案：微单取消反光板与光学取景器，结构更紧凑。"
+    },
+    {
+        id: 23,
+        text: "教案中“当代大学生摄影奖”用于以赛促学。",
+        answer: true,
+        explanation: "教案：课程以一赛促学，推荐参加摄影比赛。"
+    },
+    {
+        id: 24,
+        text: "全画幅传感器尺寸是36×24mm。",
+        answer: true,
+        explanation: "教案：全画幅尺寸36×24mm。"
+    },
+    {
+        id: 25,
+        text: "光学取景器OVF属于微单取景方式。",
+        answer: false,
+        explanation: "教案：微单没有光学取景器（OVF）。"
+    },
+    {
+        id: 26,
+        text: "携带相机时，背带应缠绕手腕或挂颈部。",
+        answer: true,
+        explanation: "教案：始终用背带，缠绕手腕或悬挂颈部。"
+    },
+    {
+        id: 27,
+        text: "相机放入包内时，镜头应朝下。",
+        answer: true,
+        explanation: "教案：镜头朝下放入包内，避免磕碰。"
+    },
+    {
+        id: 28,
+        text: "更换镜头应选择清洁避风的环境。",
+        answer: true,
+        explanation: "教案：换镜头需在清洁避风环境。"
+    },
+    {
+        id: 29,
+        text: "装卸电池与存储卡必须关机操作。",
+        answer: true,
+        explanation: "教案：关闭电源后再装卸电池与存储卡。"
+    },
+    {
+        id: 30,
+        text: "相机电池可以存放于高温潮湿处。",
+        answer: false,
+        explanation: "教案：电池避免高温、潮湿环境。"
+    },
+    {
+        id: 31,
+        text: "相机存储卡的操作禁忌是强行拔插。",
+        answer: true,
+        explanation: "教案：存储卡勿强行拔插。"
+    },
+    {
+        id: 32,
+        text: "雨天、沙尘环境拍摄应使用防水防尘罩。",
+        answer: true,
+        explanation: "教案：雨天沙尘使用防水防尘罩。"
+    },
+    {
+        id: 33,
+        text: "站姿拍摄双脚应与肩同宽。",
+        answer: true,
+        explanation: "教案：站姿双脚与肩同宽。"
+    },
+    {
+        id: 34,
+        text: "正确持机姿势是右手握机，左手托镜头。",
+        answer: true,
+        explanation: "教案：右手握相机，左手托镜头。"
+    },
+    {
+        id: 35,
+        text: "站姿拍摄按快门时应屏息。",
+        answer: true,
+        explanation: "教案：按快门时屏息，避免抖动模糊。"
+    },
+    {
+        id: 36,
+        text: "蹲姿拍摄稳定的要点是手肘抵膝。",
+        answer: true,
+        explanation: "教案：蹲姿手肘抵膝保持稳定。"
+    },
+    {
+        id: 37,
+        text: "俯拍时为保持稳定可以借用支撑物。",
+        answer: true,
+        explanation: "教案：俯拍可借用周边支撑物。"
+    },
+    {
+        id: 38,
+        text: "单手持机属于正确的拍摄姿势。",
+        answer: false,
+        explanation: "教案：单手持机、身体后仰是错误姿势。"
+    },
+    {
+        id: 39,
+        text: "钢丝球属于相机清洁工具。",
+        answer: false,
+        explanation: "教案：清洁用气吹、镜头笔、软布，禁用硬物。"
+    },
+    {
+        id: 40,
+        text: "相机长期存放应卸下电池。",
+        answer: true,
+        explanation: "教案：长期存放卸下电池，放防潮箱。"
+    },
+    {
+        id: 41,
+        text: "相机长期存放最佳容器是防潮箱。",
+        answer: true,
+        explanation: "教案：长期存放置于防潮箱。"
+    },
+    {
+        id: 42,
+        text: "竖拍相机时核心要求是保持稳定，手肘贴身体。",
+        answer: true,
+        explanation: "教案：竖拍仍需稳定、手肘贴近身体。"
+    },
+    {
+        id: 43,
+        text: "人群拥挤环境拍摄首要注意设备保护。",
+        answer: true,
+        explanation: "教案：设置拥挤场景训练设备保护意识。"
+    },
+    {
+        id: 44,
+        text: "摄影设备安全应用的核心原则是安全为主，规范操作。",
+        answer: true,
+        explanation: "教案：课程强调安全为主、规范操作。"
+    },
+    {
+        id: 45,
+        text: "更换镜头时最容易进入相机的是灰尘。",
+        answer: true,
+        explanation: "教案：换镜头要避风防尘，防止灰尘进入。"
+    },
+    {
+        id: 46,
+        text: "教案中将相机镜头比喻为眼睛。",
+        answer: true,
+        explanation: "教案：镜头如同人眼。"
+    },
+    {
+        id: 47,
+        text: "胶卷是单反基本结构的组成部分。",
+        answer: false,
+        explanation: "教案：单反结构含镜头、反光板、快门、传感器，无胶卷。"
+    },
+    {
+        id: 48,
+        text: "相机的“数字底片”指的是图像传感器。",
+        answer: true,
+        explanation: "教案：图像传感器=数字底片。"
+    },
+    {
+        id: 49,
+        text: "影响传感器画质与视角的最核心因素是尺寸（画幅）。",
+        answer: true,
+        explanation: "教案：画幅尺寸决定视角与画质。"
+    },
+    {
+        id: 50,
+        text: "相机处理器的作用包含捕捉光线。",
+        answer: false,
+        explanation: "教案：处理器处理数据、色彩、连拍、降噪；捕捉光线是传感器。"
+    },
+    {
+        id: 51,
+        text: "单反的取景系统是光学取景器OVF。",
+        answer: true,
+        explanation: "教案：单反用光学取景器OVF。"
+    },
+    {
+        id: 52,
+        text: "镜头系统中控制进光量与景深的部件是光圈叶片。",
+        answer: true,
+        explanation: "教案：光圈叶片控制进光量与景深。"
+    },
+    {
+        id: 53,
+        text: "镜头中驱动自动对焦的部件是对焦马达。",
+        answer: true,
+        explanation: "教案：对焦马达驱动镜片实现自动对焦。"
+    },
+    {
+        id: 54,
+        text: "连接机身与镜头的接口叫卡口。",
+        answer: true,
+        explanation: "教案：卡口连接机身与镜头。"
+    },
+    {
+        id: 55,
+        text: "广角镜头的焦距范围是<35mm。",
+        answer: true,
+        explanation: "教案：广角镜头<35mm。"
+    },
+    {
+        id: 56,
+        text: "标准镜头焦距约为50mm。",
+        answer: true,
+        explanation: "教案：标准镜头≈50mm。"
+    },
+    {
+        id: 57,
+        text: "长焦镜头焦距范围是>70mm。",
+        answer: true,
+        explanation: "教案：长焦镜头>70mm。"
+    },
+    {
+        id: 58,
+        text: "广角镜头适合风光、建筑、室内拍摄。",
+        answer: true,
+        explanation: "教案：广角适合风光、建筑、室内。"
+    },
+    {
+        id: 59,
+        text: "长焦镜头适合体育、野生动物、特写拍摄。",
+        answer: true,
+        explanation: "教案：长焦适合体育、野生动物、特写。"
+    },
+    {
+        id: 60,
+        text: "焦距固定不可变的镜头叫定焦镜头。",
+        answer: true,
+        explanation: "教案：焦距恒定=定焦。"
+    },
+    {
+        id: 61,
+        text: "焦距可以变化的镜头叫变焦镜头。",
+        answer: true,
+        explanation: "教案：焦距可变=变焦。"
+    },
+    {
+        id: 62,
+        text: "24-70mm f/2.8属于恒定光圈类型。",
+        answer: true,
+        explanation: "教案：全段最大光圈不变=恒定光圈。"
+    },
+    {
+        id: 63,
+        text: "18-55mm f/3.5-5.6属于浮动光圈。",
+        answer: true,
+        explanation: "教案：光圈随焦距变化=浮动光圈，常见套机头。"
+    },
+    {
+        id: 64,
+        text: "镜头镜片组的核心作用是折射光线、矫正像差。",
+        answer: true,
+        explanation: "教案：镜片组折射光线、矫正像差。"
+    },
+    {
+        id: 65,
+        text: "老蛙属于国产镜头品牌。",
+        answer: true,
+        explanation: "教案：国产镜头老蛙、永诺、中一光学。"
+    },
+    {
+        id: 66,
+        text: "教案将光圈比喻为水龙头。",
+        answer: true,
+        explanation: "教案：光圈像水龙头，控制进光量。"
+    },
+    {
+        id: 67,
+        text: "光圈的本质是可调节叶片孔径。",
+        answer: true,
+        explanation: "教案：光圈是叶片组成的可调节孔径。"
+    },
+    {
+        id: 68,
+        text: "光圈f值计算公式是f=焦距/孔径。",
+        answer: true,
+        explanation: "教案：f值=焦距÷光圈孔径。"
+    },
+    {
+        id: 69,
+        text: "f/2.8属于大光圈。",
+        answer: true,
+        explanation: "教案：f值越小，光圈越大。"
+    },
+    {
+        id: 70,
+        text: "f/16属于小光圈。",
+        answer: true,
+        explanation: "教案：f值越大，光圈越小。"
+    },
+    {
+        id: 71,
+        text: "快门与ISO不变，光圈开大一档，画面会变亮。",
+        answer: true,
+        explanation: "教案：光圈开大进光翻倍，画面更亮。"
+    },
+    {
+        id: 72,
+        text: "画面从前到后清晰的范围称为景深。",
+        answer: true,
+        explanation: "教案：景深=清晰范围。"
+    },
+    {
+        id: 73,
+        text: "光圈越大，景深越浅。",
+        answer: true,
+        explanation: "教案：光圈越大（f越小），景深越浅。"
+    },
+    {
+        id: 74,
+        text: "想要背景虚化突出人物应使用大光圈。",
+        answer: true,
+        explanation: "教案：大光圈=浅景深=背景虚化。"
+    },
+    {
+        id: 75,
+        text: "拍摄建筑全景追求整体清晰用中等光圈f/8-f/11。",
+        answer: true,
+        explanation: "教案：f/8-f/11锐度最高、解析力最佳。"
+    },
+    {
+        id: 76,
+        text: "像素是影响景深的三要素之一。",
+        answer: false,
+        explanation: "教案：景深三要素=光圈、距离、焦距。"
+    },
+    {
+        id: 77,
+        text: "拍摄距离越近，景深越浅。",
+        answer: true,
+        explanation: "教案：离主体越近，景深越浅。"
+    },
+    {
+        id: 78,
+        text: "焦距越长，景深越浅。",
+        answer: true,
+        explanation: "教案：焦距越长，景深越浅。"
+    },
+    {
+        id: 79,
+        text: "相机上用于提前查看景深的按钮是景深预览按钮。",
+        answer: true,
+        explanation: "教案：景深预览按钮可查看清晰范围。"
+    },
+    {
+        id: 80,
+        text: "光圈相邻两档进光量相差约2倍。",
+        answer: true,
+        explanation: "教案：上一级是下一级2倍进光量。"
+    },
+    {
+        id: 81,
+        text: "从f/8调到f/5.6，光圈开大一档。",
+        answer: true,
+        explanation: "教案：f/8→f/5.6，开大一档，进光翻倍。"
+    },
+    {
+        id: 82,
+        text: "消费型数码相机光圈常见范围是f/2.8-f/11。",
+        answer: true,
+        explanation: "教案：消费机光圈多在f/2.8-f/11。"
+    },
+    {
+        id: 83,
+        text: "光圈优先模式在相机上通常标记为Av/A。",
+        answer: true,
+        explanation: "教案：Av/A=光圈优先。"
+    },
+    {
+        id: 84,
+        text: "光圈优先模式下，相机会自动调整快门。",
+        answer: true,
+        explanation: "光圈优先：人定光圈，相机自动配快门。"
+    },
+    {
+        id: 85,
+        text: "镜头最大光圈容易出现色散与暗角。",
+        answer: true,
+        explanation: "教案：最大光圈可能色散、暗角。"
+    },
+    {
+        id: 86,
+        text: "镜头最小光圈容易出现衍射导致画质下降。",
+        answer: true,
+        explanation: "教案：最小光圈易衍射画质下降。"
+    },
+    {
+        id: 87,
+        text: "光圈被称为“注意力调度器”是因为它控制清晰与模糊范围。",
+        answer: true,
+        explanation: "教案：光圈决定哪里清晰、哪里模糊。"
+    },
+    {
+        id: 88,
+        text: "拍摄集体照应选择小光圈。",
+        answer: true,
+        explanation: "集体照需要大景深，用小光圈。"
+    },
+    {
+        id: 89,
+        text: "f/9属于画质最优的光圈。",
+        answer: true,
+        explanation: "教案：f/8-f/11为最佳光圈。"
+    },
+    {
+        id: 90,
+        text: "用f/1.8拍摄人物，目的主要是背景虚化。",
+        answer: true,
+        explanation: "f/1.8大光圈，浅景深、虚化背景。"
+    },
+    {
+        id: 91,
+        text: "小光圈拍摄太阳、灯光容易出现星芒效果。",
+        answer: true,
+        explanation: "教案：小光圈易出星芒。"
+    },
+    {
+        id: 92,
+        text: "大光圈逆光拍摄容易出现柔和光斑。",
+        answer: true,
+        explanation: "大光圈逆光易出现柔和光斑（虚化）。"
+    },
+    {
+        id: 93,
+        text: "光圈的三重身份包含焦距决定者。",
+        answer: false,
+        explanation: "教案：光圈三身份：曝光、景深、画质。"
+    },
+    {
+        id: 94,
+        text: "f值越小，光圈越大。",
+        answer: true,
+        explanation: "教案：f越小，光圈越大，进光越多。"
+    },
+    {
+        id: 95,
+        text: "想让前后景物全部清晰应使用小光圈。",
+        answer: true,
+        explanation: "小光圈=大景深，前后都清晰。"
+    },
+    {
+        id: 96,
+        text: "想让主体清晰、背景模糊应使用大光圈。",
+        answer: true,
+        explanation: "大光圈=浅景深，主体突出。"
+    },
+    {
+        id: 97,
+        text: "光圈优先适合拍摄必须控制景深的题材。",
+        answer: true,
+        explanation: "光圈优先用于精准控制景深。"
+    },
+    {
+        id: 98,
+        text: "教案用伟人像案例讲解光圈，主要是为了树立正确历史观与民族观。",
+        answer: true,
+        explanation: "教案思政：伟人案例树立正确历史观、民族观。"
+    },
+    {
+        id: 99,
+        text: "相机光圈调节通常可以精细到1/3级。",
+        answer: true,
+        explanation: "教案：相机可1/3级微调光圈。"
+    },
+    {
+        id: 100,
+        text: "控制光圈本质上是控制观看方式（清晰/模糊）。",
+        answer: true,
+        explanation: "教案核心：控制光圈=控制观看方式。"
+    },
+    {
+        id: 101,
+        text: "快门被比喻为“时间之窗”。",
+        answer: true,
+        explanation: "教案定义快门为“一扇时间之窗”。"
+    },
+    {
+        id: 102,
+        text: "快门控制光线照射传感器的时间。",
+        answer: true,
+        explanation: "快门相当于时间闸门，控制光线照射传感器时长。"
+    },
+    {
+        id: 103,
+        text: "安全快门≈1/镜头焦距。",
+        answer: true,
+        explanation: "安全快门计算公式为安全快门≈1/镜头焦距。"
+    },
+    {
+        id: 104,
+        text: "50mm镜头安全快门是1/30s。",
+        answer: false,
+        explanation: "50mm镜头安全快门应为1/50s。"
+    },
+    {
+        id: 105,
+        text: "高速快门能凝固运动瞬间。",
+        answer: true,
+        explanation: "高速快门可定格快速运动的画面。"
+    },
+    {
+        id: 106,
+        text: "低速快门能拍出拖影与光轨。",
+        answer: true,
+        explanation: "低速快门可记录光线流动，形成拖影、光轨效果。"
+    },
+    {
+        id: 107,
+        text: "快门优先是Tv/S模式。",
+        answer: true,
+        explanation: "快门优先模式的标识为Tv/S。"
+    },
+    {
+        id: 108,
+        text: "相邻快门进光量相差约2倍。",
+        answer: true,
+        explanation: "快门相邻档位进光量相差约一倍，即2倍。"
+    },
+    {
+        id: 109,
+        text: "低速快门手持拍摄即可稳定。",
+        answer: false,
+        explanation: "低速快门拍摄必须使用三脚架防抖。"
+    },
+    {
+        id: 110,
+        text: "快门、光圈、ISO构成曝光三角。",
+        answer: true,
+        explanation: "曝光三要素为快门、光圈、ISO。"
+    },
+    {
+        id: 111,
+        text: "B门用于长时间曝光。",
+        answer: true,
+        explanation: "B门、T门均用于长时间曝光拍摄。"
+    },
+    {
+        id: 112,
+        text: "快门速度越快画面越亮。",
+        answer: false,
+        explanation: "快门速度越快，进光时间越短，画面越暗。"
+    },
+    {
+        id: 113,
+        text: "中速快门适合拍正常行走。",
+        answer: true,
+        explanation: "1/60-1/250s中速快门可平衡动静，适合拍摄正常行走。"
+    },
+    {
+        id: 114,
+        text: "1/1000s可凝固飞溅水花。",
+        answer: true,
+        explanation: "1/1000s高速快门可定格水花飞溅瞬间。"
+    },
+    {
+        id: 115,
+        text: "2秒快门可拍车灯轨迹。",
+        answer: true,
+        explanation: "2秒低速快门可拍摄出车灯光轨效果。"
+    },
+    {
+        id: 116,
+        text: "快门单位是秒(s)。",
+        answer: true,
+        explanation: "快门速度的物理单位为秒。"
+    },
+    {
+        id: 117,
+        text: "手持模糊一定是对焦问题。",
+        answer: false,
+        explanation: "手持拍摄模糊多为快门速度过慢导致。"
+    },
+    {
+        id: 118,
+        text: "教案用阅兵案例讲解快门思政。",
+        answer: true,
+        explanation: "教案以建国70周年阅兵新闻图渗透爱国教育。"
+    },
+    {
+        id: 119,
+        text: "高速快门适合拍水流拉丝。",
+        answer: false,
+        explanation: "水流拉丝效果需要使用低速快门拍摄。"
+    },
+    {
+        id: 120,
+        text: "安全快门保证手持清晰。",
+        answer: true,
+        explanation: "使用安全快门是手持拍摄画面清晰的核心原则。"
+    },
+    {
+        id: 121,
+        text: "感光元件是相机的数字底片。",
+        answer: true,
+        explanation: "教案定义感光元件为相机的数字底片。"
+    },
+    {
+        id: 122,
+        text: "现代相机主流用CCD。",
+        answer: false,
+        explanation: "现代数码相机主流使用CMOS传感器。"
+    },
+    {
+        id: 123,
+        text: "CCD成像质量高但功耗大。",
+        answer: true,
+        explanation: "CCD传感器特点为成像效果好，但功耗较大。"
+    },
+    {
+        id: 124,
+        text: "全画幅尺寸36×24mm。",
+        answer: true,
+        explanation: "全画幅传感器标准尺寸为36×24mm。"
+    },
+    {
+        id: 125,
+        text: "画幅越大背景虚化越强。",
+        answer: true,
+        explanation: "传感器画幅大小与背景虚化能力正相关。"
+    },
+    {
+        id: 126,
+        text: "画幅越大高感噪点越少。",
+        answer: true,
+        explanation: "画幅越大，高感光度下噪点控制越好。"
+    },
+    {
+        id: 127,
+        text: "ISO是感光度指标。",
+        answer: true,
+        explanation: "ISO代表相机的感光灵敏度。"
+    },
+    {
+        id: 128,
+        text: "ISO越高画面噪点越多。",
+        answer: true,
+        explanation: "ISO数值越高，画面噪点越明显，画质越差。"
+    },
+    {
+        id: 129,
+        text: "晴天适合用低ISO(100-400)。",
+        answer: true,
+        explanation: "晴天光线充足，使用低ISO可保证画质纯净。"
+    },
+    {
+        id: 130,
+        text: "弱光必须用高ISO保证拍到。",
+        answer: true,
+        explanation: "弱光环境下，拍到画面比画质纯净更重要。"
+    },
+    {
+        id: 131,
+        text: "原生最低ISO画质最优。",
+        answer: true,
+        explanation: "相机原生最低ISO画质表现最佳。"
+    },
+    {
+        id: 132,
+        text: "像素相同，传感器越大画质越好。",
+        answer: true,
+        explanation: "相同像素下，传感器尺寸越大，画质越好。"
+    },
+    {
+        id: 133,
+        text: "豪威OV是国产传感器。",
+        answer: true,
+        explanation: "豪威OV是教案中提到的国产传感器品牌。"
+    },
+    {
+        id: 134,
+        text: "等效焦距=镜头焦距×转换系数。",
+        answer: true,
+        explanation: "等效焦距计算公式为镜头焦距×焦距转换系数。"
+    },
+    {
+        id: 135,
+        text: "APS-C系数约1.5-1.6。",
+        answer: true,
+        explanation: "APS-C画幅焦距转换系数通常为1.5-1.6。"
+    },
+    {
+        id: 136,
+        text: "ISO越高画质越好。",
+        answer: false,
+        explanation: "ISO越低，画面噪点越少，画质越好。"
+    },
+    {
+        id: 137,
+        text: "感光度不属于曝光三角。",
+        answer: false,
+        explanation: "曝光三角包含光圈、快门、感光度ISO。"
+    },
+    {
+        id: 138,
+        text: "拍摄月亮要控噪用低ISO。",
+        answer: true,
+        explanation: "拍摄月亮需使用低ISO控制画面噪点。"
+    },
+    {
+        id: 139,
+        text: "高ISO可提升快门速度防抖。",
+        answer: true,
+        explanation: "提升ISO可换取更快快门速度，避免画面模糊。"
+    },
+    {
+        id: 140,
+        text: "插值像素等于真实像素。",
+        answer: false,
+        explanation: "插值像素是通过算法放大得到，不等于真实有效像素。"
+    },
+    {
+        id: 141,
+        text: "对焦是为了让主体清晰。",
+        answer: true,
+        explanation: "对焦的核心目的是让拍摄主体清晰成像。"
+    },
+    {
+        id: 142,
+        text: "AF-S是单次自动对焦。",
+        answer: true,
+        explanation: "AF-S为相机单次自动对焦标识。"
+    },
+    {
+        id: 143,
+        text: "AF-S适合拍摄静止物体。",
+        answer: true,
+        explanation: "单次自动对焦适合静止不动的拍摄主体。"
+    },
+    {
+        id: 144,
+        text: "AF-C适合拍摄运动物体。",
+        answer: true,
+        explanation: "连续自动对焦适合跟踪拍摄运动主体。"
+    },
+    {
+        id: 145,
+        text: "MF是手动对焦。",
+        answer: true,
+        explanation: "MF为相机手动对焦标识。"
+    },
+    {
+        id: 146,
+        text: "弱光、纯色自动对焦易失效。",
+        answer: true,
+        explanation: "弱光、纯色墙面低反差环境，自动对焦难以合焦。"
+    },
+    {
+        id: 147,
+        text: "微距摄影常用手动对焦。",
+        answer: true,
+        explanation: "微距摄影景深极浅，需要手动对焦精细调整。"
+    },
+    {
+        id: 148,
+        text: "单点自动对焦最精准。",
+        answer: true,
+        explanation: "单点对焦是精度最高的对焦区域模式。"
+    },
+    {
+        id: 149,
+        text: "广域对焦适合复杂运动。",
+        answer: true,
+        explanation: "广域/跟踪对焦可稳定跟踪复杂运动主体。"
+    },
+    {
+        id: 150,
+        text: "半按快门启动对焦。",
+        answer: true,
+        explanation: "半按快门是相机启动对焦与测光的标准操作。"
+    },
+    {
+        id: 151,
+        text: "对焦锁定可先对焦再构图。",
+        answer: true,
+        explanation: "对焦锁定后可重新构图，保持焦点不变。"
+    },
+    {
+        id: 152,
+        text: "对焦点越多成功率越高。",
+        answer: true,
+        explanation: "对焦点数量越多，对焦覆盖与成功率越高。"
+    },
+    {
+        id: 153,
+        text: "透过玻璃适合自动对焦。",
+        answer: false,
+        explanation: "透过玻璃拍摄易对焦失误，应使用手动对焦。"
+    },
+    {
+        id: 154,
+        text: "AF-S合焦后焦点不变。",
+        answer: true,
+        explanation: "单次自动对焦合焦后会锁定焦点。"
+    },
+    {
+        id: 155,
+        text: "AF-C半按期间持续跟踪。",
+        answer: true,
+        explanation: "连续自动对焦半按快门时会持续跟踪运动主体。"
+    },
+    {
+        id: 156,
+        text: "峰值对焦辅助手动对焦。",
+        answer: true,
+        explanation: "峰值对焦是辅助手动对焦的实用功能。"
+    },
+    {
+        id: 157,
+        text: "教案鼓励拍摄校园正能量。",
+        answer: true,
+        explanation: "教案思政引导拍摄校园正能量内容。"
+    },
+    {
+        id: 158,
+        text: "对焦不准主体会模糊。",
+        answer: true,
+        explanation: "对焦失败最直接结果就是拍摄主体模糊。"
+    },
+    {
+        id: 159,
+        text: "所有场景都必须用自动对焦。",
+        answer: false,
+        explanation: "弱光、微距、玻璃等复杂场景必须使用手动对焦。"
+    },
+    {
+        id: 160,
+        text: "对焦是清晰影像的基础。",
+        answer: true,
+        explanation: "清晰对焦是拍摄清晰影像的前提。"
+    },
+    {
+        id: 161,
+        text: "相机测光以18%中性灰为基准。",
+        answer: true,
+        explanation: "相机测光系统以18%中性灰为测光基准。"
+    },
+    {
+        id: 162,
+        text: "相机拍白雪会自动拍灰。",
+        answer: true,
+        explanation: "相机测光逻辑会将白雪拍摄成灰色。"
+    },
+    {
+        id: 163,
+        text: "评价测光最智能通用。",
+        answer: true,
+        explanation: "评价测光是日常拍摄最通用、智能的测光模式。"
+    },
+    {
+        id: 164,
+        text: "中央重点侧重画面中央。",
+        answer: true,
+        explanation: "中央重点测光以画面中央区域为测光侧重。"
+    },
+    {
+        id: 165,
+        text: "点测光仅测约2.5%小区域。",
+        answer: true,
+        explanation: "点测光仅测量画面约2.5%的精准区域。"
+    },
+    {
+        id: 166,
+        text: "点测光适合逆光、大反差。",
+        answer: true,
+        explanation: "点测光适合逆光、主体与背景反差大的场景。"
+    },
+    {
+        id: 167,
+        text: "自动包围曝光用于不确定曝光时。",
+        answer: true,
+        explanation: "曝光不确定时，可用包围曝光多拍几张选取最优。"
+    },
+    {
+        id: 168,
+        text: "逆光人脸自动测光易发黑。",
+        answer: true,
+        explanation: "逆光环境自动测光易导致人脸曝光不足发黑。"
+    },
+    {
+        id: 169,
+        text: "测光决定光圈快门ISO。",
+        answer: true,
+        explanation: "测光结果为光圈、快门、ISO曝光参数提供依据。"
+    },
+    {
+        id: 170,
+        text: "相机测光永远准确无需修正。",
+        answer: false,
+        explanation: "相机测光会失误，必须根据场景人为修正。"
+    },
+    {
+        id: 171,
+        text: "大面积亮/暗最易测光失误。",
+        answer: true,
+        explanation: "大面积纯白、纯黑场景，相机测光最容易失效。"
+    },
+    {
+        id: 172,
+        text: "平均测光会拉平明暗反差。",
+        answer: true,
+        explanation: "平均测光可平衡画面亮部与暗部，拉平反差。"
+    },
+    {
+        id: 173,
+        text: "拍摄国旗可用测光思政案例。",
+        answer: true,
+        explanation: "教案以国旗、校训石作为测光思政案例。"
+    },
+    {
+        id: 174,
+        text: "同一场景不同测光曝光一样。",
+        answer: false,
+        explanation: "同一场景使用不同测光模式，曝光结果不同。"
+    },
+    {
+        id: 175,
+        text: "对焦锁定与测光锁定可独立用。",
+        answer: true,
+        explanation: "对焦锁定和测光锁定功能相互独立，可分别使用。"
+    },
+    {
+        id: 176,
+        text: "舞台居中演员适合中央重点。",
+        answer: true,
+        explanation: "舞台居中主体适合使用中央重点测光。"
+    },
+    {
+        id: 177,
+        text: "集体照应使用点测光。",
+        answer: false,
+        explanation: "集体照应使用评价测光保证整体曝光均匀。"
+    },
+    {
+        id: 178,
+        text: "相机无法识别纯白与纯黑。",
+        answer: true,
+        explanation: "相机测光只会按18%灰还原，无法识别纯白纯黑。"
+    },
+    {
+        id: 179,
+        text: "测光只在自动模式有效。",
+        answer: false,
+        explanation: "M手动档也需要测光系统作为参数参考。"
+    },
+    {
+        id: 180,
+        text: "合理测光能保证曝光准确。",
+        answer: true,
+        explanation: "合理选择测光模式是画面曝光准确的前提。"
+    },
+    {
+        id: 181,
+        text: "曝光补偿单位是EV。",
+        answer: true,
+        explanation: "曝光补偿的标准计量单位为EV。"
+    },
+    {
+        id: 182,
+        text: "白加黑减是黄金法则。",
+        answer: true,
+        explanation: "白加黑减是曝光补偿的核心原则。"
+    },
+    {
+        id: 183,
+        text: "拍白墙要+EV，拍黑板要-EV。",
+        answer: true,
+        explanation: "白墙加曝光还原白色，黑板减曝光还原黑色。"
+    },
+    {
+        id: 184,
+        text: "曝光补偿在M档无效。",
+        answer: true,
+        explanation: "M手动档由手动控制参数，曝光补偿无效。"
+    },
+    {
+        id: 185,
+        text: "+1EV进光量翻倍。",
+        answer: true,
+        explanation: "曝光补偿+1EV，画面进光量增加一倍。"
+    },
+    {
+        id: 186,
+        text: "直方图右移画面变亮。",
+        answer: true,
+        explanation: "增加曝光补偿，直方图波形右移，画面变亮。"
+    },
+    {
+        id: 187,
+        text: "逆光人像通常要+0.3~+1EV。",
+        answer: true,
+        explanation: "逆光人像需微加曝光补偿提亮人脸。"
+    },
+    {
+        id: 188,
+        text: "高调风格用+EV，低调用-EV。",
+        answer: true,
+        explanation: "高调画面加曝光，低调画面减曝光。"
+    },
+    {
+        id: 189,
+        text: "色温单位是开尔文(K)。",
+        answer: true,
+        explanation: "色温的物理单位为开尔文，符号K。"
+    },
+    {
+        id: 190,
+        text: "低色温偏暖黄，高色温偏冷蓝。",
+        answer: true,
+        explanation: "色温越低画面越暖黄，色温越高画面越冷蓝。"
+    },
+    {
+        id: 191,
+        text: "自动白平衡AWB最精准。",
+        answer: false,
+        explanation: "自定义/手动白平衡比自动白平衡更精准。"
+    },
+    {
+        id: 192,
+        text: "钨丝灯模式校正室内黄偏色。",
+        answer: true,
+        explanation: "白炽灯/钨丝灯模式用于校正室内偏黄问题。"
+    },
+    {
+        id: 193,
+        text: "晴天阴影照片易偏蓝。",
+        answer: true,
+        explanation: "晴天阴影下色温偏高，照片容易偏蓝色。"
+    },
+    {
+        id: 194,
+        text: "阴天白平衡比阴影稍暖。",
+        answer: true,
+        explanation: "阴天白平衡预设比阴影模式色调更暖。"
+    },
+    {
+        id: 195,
+        text: "自定义白平衡最精准。",
+        answer: true,
+        explanation: "手动自定义白平衡是最精准的白平衡方式。"
+    },
+    {
+        id: 196,
+        text: "RAW格式白平衡后期可无损改。",
+        answer: true,
+        explanation: "RAW格式照片可在后期无损调整白平衡参数。"
+    },
+    {
+        id: 197,
+        text: "白平衡只用于校正色偏，不能创意。",
+        answer: false,
+        explanation: "白平衡可故意偏色，用于摄影创意创作。"
+    },
+    {
+        id: 198,
+        text: "教案白平衡强调求真求实。",
+        answer: true,
+        explanation: "教案白平衡思政教育强调追求真实、实事求是。"
+    },
+    {
+        id: 199,
+        text: "高反光物体(雪/水)要加曝光。",
+        answer: true,
+        explanation: "雪、水等高反光白色物体遵循白加原则，需加曝光。"
+    },
+    {
+        id: 200,
+        text: "曝光补偿是创作情绪工具。",
+        answer: true,
+        explanation: "曝光补偿可控制画面亮度，表达不同拍摄情绪。"
+    },
+    {
+        id: 201,
+        text: "光是摄影的“画笔”与“塑形刀”。",
+        answer: true,
+        explanation: "教案4.1课程导入明确提出此核心观点。"
+    },
+    {
+        id: 202,
+        text: "硬光（直射光）的阴影边缘模糊、反差小。",
+        answer: false,
+        explanation: "教案4.1：硬光阴影清晰锐利、边缘分明，反差大。"
+    },
+    {
+        id: 203,
+        text: "软光（散射光）阴影淡而柔和、过渡平滑。",
+        answer: true,
+        explanation: "教案4.1：软光方向性弱，阴影柔和，反差小。"
+    },
+    {
+        id: 204,
+        text: "光源相对于被摄体越大、越近，光质越软。",
+        answer: true,
+        explanation: "教案4.1：光源相对大小决定软硬，越大越近越软。"
+    },
+    {
+        id: 205,
+        text: "晴天直射阳光属于典型软光。",
+        answer: false,
+        explanation: "教案4.1：晴天直射阳光为硬光。"
+    },
+    {
+        id: 206,
+        text: "阴天天空光是巨大的柔光箱，属于软光。",
+        answer: true,
+        explanation: "教案4.1：阴天漫射光为标准软光。"
+    },
+    {
+        id: 207,
+        text: "硬光适合塑造力量感、戏剧性。",
+        answer: true,
+        explanation: "教案4.1：硬光强调轮廓与纹理，表现力量。"
+    },
+    {
+        id: 208,
+        text: "软光适合弱化瑕疵、表现细腻质感。",
+        answer: true,
+        explanation: "教案4.1：软光平滑肤质，适合柔美人像。"
+    },
+    {
+        id: 209,
+        text: "顺光（正面光）光源位于相机后方。",
+        answer: true,
+        explanation: "教案4.1/4.3：顺光为正面照明。"
+    },
+    {
+        id: 210,
+        text: "顺光画面立体感强、阴影丰富。",
+        answer: false,
+        explanation: "教案4.1/4.3：顺光受光均匀，画面偏平，立体感弱。"
+    },
+    {
+        id: 211,
+        text: "前侧光（约45°）被称为“塑形之光”。",
+        answer: true,
+        explanation: "教案4.3：前侧光是最常用自然塑形光。"
+    },
+    {
+        id: 212,
+        text: "正侧光（90°）会形成一半亮一半暗的效果。",
+        answer: true,
+        explanation: "教案4.3：侧光明暗分界明显，质感表现力最强。"
+    },
+    {
+        id: 213,
+        text: "逆光光源位于被摄体正后方。",
+        answer: true,
+        explanation: "教案4.1/4.3：逆光=背面光、轮廓光。"
+    },
+    {
+        id: 214,
+        text: "逆光能勾勒轮廓金边、表现通透感。",
+        answer: true,
+        explanation: "教案4.3：逆光适合树叶、发丝、剪影创作。"
+    },
+    {
+        id: 215,
+        text: "顶光来自被摄体正上方，如正午太阳。",
+        answer: true,
+        explanation: "教案4.5：顶光典型为正午阳光。"
+    },
+    {
+        id: 216,
+        text: "顶光拍摄人像容易出现眼窝、鼻下阴影。",
+        answer: true,
+        explanation: "教案4.5：顶光被称为“人像禁区光”。"
+    },
+    {
+        id: 217,
+        text: "底光（脚光）来自被摄体下方，氛围诡异。",
+        answer: true,
+        explanation: "教案4.5：底光反常规，多用于戏剧氛围。"
+    },
+    {
+        id: 218,
+        text: "侧逆光角度约135°，能勾勒轮廓。",
+        answer: true,
+        explanation: "教案4.3：侧逆光为后侧照明，分离主体与背景。"
+    },
+    {
+        id: 219,
+        text: "光位以相机与被摄体连线为轴判断。",
+        answer: true,
+        explanation: "教案4.3：光位判断标准定义。"
+    },
+    {
+        id: 220,
+        text: "证件照最适合使用顺光拍摄。",
+        answer: true,
+        explanation: "教案4.3：顺光均匀，适合标准人像。"
+    },
+    {
+        id: 221,
+        text: "拍摄建筑结构适合用侧光强调质感。",
+        answer: true,
+        explanation: "教案4.3：侧光最能表现立体与纹理。"
+    },
+    {
+        id: 222,
+        text: "剪影效果最适合用顺光拍摄。",
+        answer: false,
+        explanation: "教案4.3：剪影必须使用逆光。"
+    },
+    {
+        id: 223,
+        text: "下午三四点的阳光多为优质前侧光。",
+        answer: true,
+        explanation: "教案4.3/4.6：下午斜光为黄金塑形光。"
+    },
+    {
+        id: 224,
+        text: "逆光也被称为“轮廓光”“氛围之光”。",
+        answer: true,
+        explanation: "教案4.3：逆光核心定义。"
+    },
+    {
+        id: 225,
+        text: "直射光对应硬光，散射光对应软光。",
+        answer: true,
+        explanation: "教案4.1：光的聚散与软硬一一对应。"
+    },
+    {
+        id: 226,
+        text: "柔光罩、反光板可将硬光转化为软光。",
+        answer: true,
+        explanation: "教案4.1：软光化控制方法。"
+    },
+    {
+        id: 227,
+        text: "对光的认识是摄影技术与艺术最重要部分。",
+        answer: true,
+        explanation: "教案4.1核心结论。"
+    },
+    {
+        id: 228,
+        text: "摄影是光与影的艺术，无光则无摄影。",
+        answer: true,
+        explanation: "教案4.1课程核心定义。"
+    },
+    {
+        id: 229,
+        text: "顶光只能拍坏人像，完全不能创意使用。",
+        answer: false,
+        explanation: "教案4.5：顶光可拍抽象投影、神圣感。"
+    },
+    {
+        id: 230,
+        text: "底光可模拟篝火、烛光，营造温暖氛围。",
+        answer: true,
+        explanation: "教案4.5：底光创意应用。"
+    },
+    {
+        id: 231,
+        text: "晨曦光线柔和、色温偏高（冷蓝调）。",
+        answer: true,
+        explanation: "教案4.6：清晨光线特征。"
+    },
+    {
+        id: 232,
+        text: "上午10点前是全能拍摄时段，光位理想。",
+        answer: true,
+        explanation: "教案4.6：上午光优质、色彩真实。"
+    },
+    {
+        id: 233,
+        text: "正午是拍摄人像的最佳光线。",
+        answer: false,
+        explanation: "教案4.6：正午顶光硬、反差大，非最佳。"
+    },
+    {
+        id: 234,
+        text: "下午是风光与人像创作的黄金时段。",
+        answer: true,
+        explanation: "教案4.6：下午侧逆光温暖，造型力强。"
+    },
+    {
+        id: 235,
+        text: "日出日落为低色温，呈现暖黄橙红色调。",
+        answer: true,
+        explanation: "教案4.6：晨昏光线色温特征。"
+    },
+    {
+        id: 236,
+        text: "自然光一天中角度、强度、色温持续变化。",
+        answer: true,
+        explanation: "教案4.6核心知识点。"
+    },
+    {
+        id: 237,
+        text: "正午拍摄应尽量寻找树荫、反射软光。",
+        answer: true,
+        explanation: "教案4.6：正午避顶光策略。"
+    },
+    {
+        id: 238,
+        text: "画面色彩由固有色、光源色、环境色共同决定。",
+        answer: true,
+        explanation: "教案4.7：色彩三要素结论。"
+    },
+    {
+        id: 239,
+        text: "环境光是光源本身的颜色（色温）。",
+        answer: true,
+        explanation: "教案4.7：环境光定义。"
+    },
+    {
+        id: 240,
+        text: "环境色是周围物体反射到主体的颜色。",
+        answer: true,
+        explanation: "教案4.7：环境色定义。"
+    },
+    {
+        id: 241,
+        text: "红、橙、黄属于暖色，传递温暖活力。",
+        answer: true,
+        explanation: "教案4.7：色彩情感。"
+    },
+    {
+        id: 242,
+        text: "蓝、青属于冷色，传递冷静宁静。",
+        answer: true,
+        explanation: "教案4.7：色彩情感。"
+    },
+    {
+        id: 243,
+        text: "同类色搭配和谐统一、高级耐看。",
+        answer: true,
+        explanation: "教案4.7：色彩搭配原则。"
+    },
+    {
+        id: 244,
+        text: "互补色对比强烈、视觉冲击力强。",
+        answer: true,
+        explanation: "教案4.7：互补色效果。"
+    },
+    {
+        id: 245,
+        text: "混合光源是冷暖光线同时存在的场景。",
+        answer: true,
+        explanation: "教案4.7：混合光源定义。"
+    },
+    {
+        id: 246,
+        text: "RAW格式可后期无损调整色温与色彩。",
+        answer: true,
+        explanation: "教案4.7：RAW格式优势。"
+    },
+    {
+        id: 247,
+        text: "顺光色彩还原好、细节丰富。",
+        answer: true,
+        explanation: "教案4.1/4.3：顺光优势。"
+    },
+    {
+        id: 248,
+        text: "侧光是表现质感、立体感的王牌光位。",
+        answer: true,
+        explanation: "教案4.3：侧光核心作用。"
+    },
+    {
+        id: 249,
+        text: "逆光拍摄只能做剪影，不能补光拍透亮人像。",
+        answer: false,
+        explanation: "教案4.3：逆光可补光拍通透质感。"
+    },
+    {
+        id: 250,
+        text: "光的三大属性是性质、聚散、方向。",
+        answer: true,
+        explanation: "教案4.1：光线三维属性。"
+    },
+    {
+        id: 251,
+        text: "未经修饰的闪光灯属于硬光。",
+        answer: true,
+        explanation: "教案4.1：点光源直射为硬光。"
+    },
+    {
+        id: 252,
+        text: "雾气、雨天中的光线普遍偏软。",
+        answer: true,
+        explanation: "教案4.1：散射环境形成软光。"
+    },
+    {
+        id: 253,
+        text: "光源越小越远，光质越硬。",
+        answer: true,
+        explanation: "教案4.1：软硬决定规律。"
+    },
+    {
+        id: 254,
+        text: "硬光适合拍摄建筑结构与力量感。",
+        answer: true,
+        explanation: "教案4.1：硬光适用题材。"
+    },
+    {
+        id: 255,
+        text: "软光适合拍摄儿童、柔美人像。",
+        answer: true,
+        explanation: "教案4.1：软光适用题材。"
+    },
+    {
+        id: 256,
+        text: "顺光不利于表现空间立体感。",
+        answer: true,
+        explanation: "教案4.3：顺光局限。"
+    },
+    {
+        id: 257,
+        text: "侧逆光能增强画面层次与空气透视感。",
+        answer: true,
+        explanation: "教案4.3：侧逆光作用。"
+    },
+    {
+        id: 258,
+        text: "顶光结合仰拍可营造神圣、天启感。",
+        answer: true,
+        explanation: "教案4.5：顶光创意用法。"
+    },
+    {
+        id: 259,
+        text: "底光阴影向上倒置，违背日常视觉逻辑。",
+        answer: true,
+        explanation: "教案4.5：底光光影特征。"
+    },
+    {
+        id: 260,
+        text: "拍摄校园风光，逆光最适合表现层次与氛围。",
+        answer: true,
+        explanation: "教案4.2/4.3：逆光创作价值。"
+    },
+    {
+        id: 261,
+        text: "光线强弱直接影响画面曝光与反差。",
+        answer: true,
+        explanation: "教案4.1：光线强度作用。"
+    },
+    {
+        id: 262,
+        text: "光位决定物体在画面中的三维形态。",
+        answer: true,
+        explanation: "教案4.3：光位核心作用。"
+    },
+    {
+        id: 263,
+        text: "顺侧光与前侧光是同一种光位（约45°）。",
+        answer: true,
+        explanation: "教案4.3：术语同义。"
+    },
+    {
+        id: 264,
+        text: "逆光拍摄透明物体最能体现通透质感。",
+        answer: true,
+        explanation: "教案4.3：逆光适用对象。"
+    },
+    {
+        id: 265,
+        text: "正午顶光适合拍摄地面抽象阴影图案。",
+        answer: true,
+        explanation: "教案4.6：正午创意用法。"
+    },
+    {
+        id: 266,
+        text: "环境色会让主体被附近物体颜色染色。",
+        answer: true,
+        explanation: "教案4.7：反射色原理。"
+    },
+    {
+        id: 267,
+        text: "白平衡设置可以改变画面的色温倾向。",
+        answer: true,
+        explanation: "教案4.7：色温控制。"
+    },
+    {
+        id: 268,
+        text: "软光画面反差小、影调平和统一。",
+        answer: true,
+        explanation: "教案4.1：软光影调。"
+    },
+    {
+        id: 269,
+        text: "硬光画面反差大、影调硬朗强烈。",
+        answer: true,
+        explanation: "教案4.1：硬光影调。"
+    },
+    {
+        id: 270,
+        text: "拍摄校园人物写真优先选用侧光或逆光。",
+        answer: true,
+        explanation: "教案4.4：人像用光推荐。"
+    },
+    {
+        id: 271,
+        text: "同一主体在不同光位下呈现完全不同效果。",
+        answer: true,
+        explanation: "教案4.3：课程导入实验结论。"
+    },
+    {
+        id: 272,
+        text: "侧光适合拍摄墙面、树干等粗糙纹理。",
+        answer: true,
+        explanation: "教案4.3：侧光适用题材。"
+    },
+    {
+        id: 273,
+        text: "逆光下人物易发黑，需用曝光补偿提亮。",
+        answer: true,
+        explanation: "教案4.2/4.4：逆光实操技巧。"
+    },
+    {
+        id: 274,
+        text: "顶光补光应从下方或前侧反光填充。",
+        answer: true,
+        explanation: "教案4.5：顶光修正方法。"
+    },
+    {
+        id: 275,
+        text: "摄影创作中，控制光比就是控制明暗反差。",
+        answer: true,
+        explanation: "教案4.5：光比概念。"
+    },
+    {
+        id: 276,
+        text: "柔光可以通过缩小光源变成硬光。",
+        answer: true,
+        explanation: "教案4.1：光质可控转换。"
+    },
+    {
+        id: 277,
+        text: "黄昏逆光适合拍摄浪漫、温暖氛围。",
+        answer: true,
+        explanation: "教案4.4/4.6：氛围创作。"
+    },
+    {
+        id: 278,
+        text: "顺光拍摄适合记录色彩准确的建筑外观。",
+        answer: true,
+        explanation: "教案4.3：顺光应用场景。"
+    },
+    {
+        id: 279,
+        text: "底光可用于营造科幻、冷酷、疏离感。",
+        answer: true,
+        explanation: "教案4.5：底光情绪表达。"
+    },
+    {
+        id: 280,
+        text: "上午光线色温中性偏暖，色彩还原真实。",
+        answer: true,
+        explanation: "教案4.6：上午光线特征。"
+    },
+    {
+        id: 281,
+        text: "混合光源下可选定主色温，让另一部分成对比色。",
+        answer: true,
+        explanation: "教案4.7：混合光处理技巧。"
+    },
+    {
+        id: 282,
+        text: "环境光决定画面整体的色彩情绪。",
+        answer: true,
+        explanation: "教案4.7：环境光作用。"
+    },
+    {
+        id: 283,
+        text: "硬光会强化被摄体表面的凹凸与纹理。",
+        answer: true,
+        explanation: "教案4.1：硬光造型特点。"
+    },
+    {
+        id: 284,
+        text: "软光会隐没瑕疵，使肤质更平滑。",
+        answer: true,
+        explanation: "教案4.1：软光造型特点。"
+    },
+    {
+        id: 285,
+        text: "逆光可以有效分离主体与背景，增强空间感。",
+        answer: true,
+        explanation: "教案4.3：逆光空间作用。"
+    },
+    {
+        id: 286,
+        text: "光位选择是摄影最重要的造型手段之一。",
+        answer: true,
+        explanation: "教案4.3：课程核心观点。"
+    },
+    {
+        id: 287,
+        text: "阴天是拍摄人像最稳妥的天然柔光棚。",
+        answer: true,
+        explanation: "教案4.1/4.4：阴天用光优势。"
+    },
+    {
+        id: 288,
+        text: "正午拍摄应避免直射人脸，改用反射光。",
+        answer: true,
+        explanation: "教案4.6：正午实操策略。"
+    },
+    {
+        id: 289,
+        text: "侧逆光下景物常出现一条亮轮廓线。",
+        answer: true,
+        explanation: "教案4.3：侧逆光效果。"
+    },
+    {
+        id: 290,
+        text: "色温越高光线越偏冷，越低越偏暖。",
+        answer: true,
+        explanation: "教案4.6/4.7：色温规律。"
+    },
+    {
+        id: 291,
+        text: "拍摄《刻度·光阴》主题可利用光影移动表现时间。",
+        answer: true,
+        explanation: "教案4.2：项目创作要求。"
+    },
+    {
+        id: 292,
+        text: "校园人像写真应让人物与环境自然互动。",
+        answer: true,
+        explanation: "教案4.4：人物创作原则。"
+    },
+    {
+        id: 293,
+        text: "逆光可让树叶、花草呈现高亮通透边缘。",
+        answer: true,
+        explanation: "教案4.2/4.3：逆光植物效果。"
+    },
+    {
+        id: 294,
+        text: "特殊光线教学鼓励打破“完美光线”认知。",
+        answer: true,
+        explanation: "教案4.5：课程目标。"
+    },
+    {
+        id: 295,
+        text: "优秀自然光摄影师要懂得预判日光变化。",
+        answer: true,
+        explanation: "教案4.6：时间规划能力。"
+    },
+    {
+        id: 296,
+        text: "色彩搭配中主导色加小面积点缀最安全出彩。",
+        answer: true,
+        explanation: "教案4.7：色彩实用技巧。"
+    },
+    {
+        id: 297,
+        text: "光不仅照明，更是叙事、表达情绪的工具。",
+        answer: true,
+        explanation: "教案4.4/4.5：用光叙事。"
+    },
+    {
+        id: 298,
+        text: "顶光下戴帽檐可形成半明半暗的创意光效。",
+        answer: true,
+        explanation: "教案4.5：顶光趣味用法。"
+    },
+    {
+        id: 299,
+        text: "侧光比顺光更适合表现人物性格与故事感。",
+        answer: true,
+        explanation: "教案4.4：情绪用光。"
+    },
+    {
+        id: 300,
+        text: "摄影最终是控制光、利用光、表达光的艺术。",
+        answer: true,
+        explanation: "教案第四章全章总结。"
+    },
+    {
+        id: 301,
+        text: "摄影构图的本质是有目的地选择、安排、做减法与组织。",
+        answer: true,
+        explanation: "教案明确：构图不是堆砌，而是减法与组织。"
+    },
+    {
+        id: 302,
+        text: "线条是画面的骨架，负责引导视线、分割空间、表达情绪。",
+        answer: true,
+        explanation: "教案定义：线条是画面骨架与视觉路径。"
+    },
+    {
+        id: 303,
+        text: "水平线主要表达平静、安宁、稳定、宽阔。",
+        answer: true,
+        explanation: "教案：水平线对应稳定、平和情绪。"
+    },
+    {
+        id: 304,
+        text: "垂直线主要表达庄严、力量、高大、挺拔。",
+        answer: true,
+        explanation: "教案：垂直线代表力量与高耸感。"
+    },
+    {
+        id: 305,
+        text: "斜线和对角线会削弱画面动感，让画面更稳定。",
+        answer: false,
+        explanation: "教案：斜线/对角线增强动感与张力。"
+    },
+    {
+        id: 306,
+        text: "曲线主要表达优美、流畅、柔和、韵律感。",
+        answer: true,
+        explanation: "教案：曲线是柔美与韵律的线条。"
+    },
+    {
+        id: 307,
+        text: "引导线构图利用线条把观众视线引向主体。",
+        answer: true,
+        explanation: "教案：引导线核心作用是聚焦视线。"
+    },
+    {
+        id: 308,
+        text: "隐性引导线包括人物视线、手势、光影方向等。",
+        answer: true,
+        explanation: "教案：隐性引导不靠实体，靠方向与暗示。"
+    },
+    {
+        id: 309,
+        text: "构图的唯一目的是把画面拍得好看。",
+        answer: false,
+        explanation: "教案：构图目的是最佳表达主题思想。"
+    },
+    {
+        id: 310,
+        text: "形状是画面的基本建筑模块，构成画面结构。",
+        answer: true,
+        explanation: "教案：形状是构图基础单元。"
+    },
+    {
+        id: 311,
+        text: "三角形形状带来稳定、支撑、可靠的视觉感受。",
+        answer: true,
+        explanation: "教案：三角形为稳定结构。"
+    },
+    {
+        id: 312,
+        text: "圆形形状带来和谐、圆满、柔和、聚焦的感觉。",
+        answer: true,
+        explanation: "教案：圆形代表完整与柔和。"
+    },
+    {
+        id: 313,
+        text: "矩形形状带来规整、秩序、理性、稳定的感觉。",
+        answer: true,
+        explanation: "教案：矩形代表秩序与规范。"
+    },
+    {
+        id: 314,
+        text: "框架式构图可以聚焦视线、增加空间层次、营造氛围。",
+        answer: true,
+        explanation: "教案：框架构图三大作用。"
+    },
+    {
+        id: 315,
+        text: "门窗、拱廊、桥洞属于清晰的硬框架。",
+        answer: true,
+        explanation: "教案：硬框架为实体建筑结构。"
+    },
+    {
+        id: 316,
+        text: "枝叶、花朵、雨丝、雾气属于软框架。",
+        answer: true,
+        explanation: "教案：软框架为自然半透明元素。"
+    },
+    {
+        id: 317,
+        text: "想虚化框架突出主体，应使用小光圈。",
+        answer: false,
+        explanation: "教案：大光圈虚化前景框架。"
+    },
+    {
+        id: 318,
+        text: "想让框架和主体都清晰，应使用小光圈。",
+        answer: true,
+        explanation: "教案：小光圈实现全景深。"
+    },
+    {
+        id: 319,
+        text: "残缺框架比完整框架更呆板、缺乏动感。",
+        answer: false,
+        explanation: "教案：残缺框架更现代、更动感。"
+    },
+    {
+        id: 320,
+        text: "填充式构图让主体充满画面，强调细节与冲击力。",
+        answer: true,
+        explanation: "教案：填充构图强化质感与视觉冲击。"
+    },
+    {
+        id: 321,
+        text: "留白构图在主体周围留出干净空间，营造意境与呼吸感。",
+        answer: true,
+        explanation: "教案：留白是视觉呼吸与意境表达。"
+    },
+    {
+        id: 322,
+        text: "留白区域只能是纯白色，不能是天空、水面、纯色墙。",
+        answer: false,
+        explanation: "教案：留白可以是简洁单色背景。"
+    },
+    {
+        id: 323,
+        text: "重复与节奏构图依靠相同或相似形状反复出现。",
+        answer: true,
+        explanation: "教案：重复带来韵律与形式美感。"
+    },
+    {
+        id: 324,
+        text: "三分法构图也叫井字构图，将画面横竖各三等分。",
+        answer: true,
+        explanation: "教案：三分法=井字格构图。"
+    },
+    {
+        id: 325,
+        text: "三分法应把主体放在正中心位置。",
+        answer: false,
+        explanation: "教案：主体放在交点或分割线上。"
+    },
+    {
+        id: 326,
+        text: "对称构图最适合拍摄建筑、倒影、庄重宁静的场景。",
+        answer: true,
+        explanation: "教案：对称适合建筑、倒影、仪式感。"
+    },
+    {
+        id: 327,
+        text: "对称构图带来平衡、宁静、庄重、秩序感。",
+        answer: true,
+        explanation: "教案：对称构图情绪稳定庄重。"
+    },
+    {
+        id: 328,
+        text: "黄金分割比例约为1:1.618，比三分法更精细。",
+        answer: true,
+        explanation: "教案：黄金分割比值与定位。"
+    },
+    {
+        id: 329,
+        text: "中心构图直接、强烈、醒目，最能突出主体。",
+        answer: true,
+        explanation: "教案：中心构图视觉冲击力强。"
+    },
+    {
+        id: 330,
+        text: "均衡构图要求画面两边景物形状、数量、大小完全对等。",
+        answer: false,
+        explanation: "教案：均衡是视觉重量平衡，不必完全一样。"
+    },
+    {
+        id: 331,
+        text: "对比构图通过差异对照突出主体特质，增强冲击力。",
+        answer: true,
+        explanation: "教案：对比靠差异强化表现力。"
+    },
+    {
+        id: 332,
+        text: "明暗、虚实、大小、冷暖、动静都属于对比构图。",
+        answer: true,
+        explanation: "教案：对比包含五大常见类型。"
+    },
+    {
+        id: 333,
+        text: "虚实对比主要依靠光圈控制景深实现。",
+        answer: true,
+        explanation: "教案：虚化背景=大光圈浅景深。"
+    },
+    {
+        id: 334,
+        text: "横画幅强调水平线、横向延伸、稳定开阔。",
+        answer: true,
+        explanation: "教案：横画幅适合宽阔场景。"
+    },
+    {
+        id: 335,
+        text: "竖画幅强调垂直线、高大挺拔、纵向空间与情绪。",
+        answer: true,
+        explanation: "教案：竖画幅适合人像、高楼。"
+    },
+    {
+        id: 336,
+        text: "方画幅均衡、静止、庄重，也容易显得呆板。",
+        answer: true,
+        explanation: "教案：方画幅特点与优缺点。"
+    },
+    {
+        id: 337,
+        text: "高清电视与视频常用画幅比例是16:9。",
+        answer: true,
+        explanation: "教案：标准影视画幅。"
+    },
+    {
+        id: 338,
+        text: "画幅选择应依据表达意图与主体形态，而非固定格式。",
+        answer: true,
+        explanation: "教案：画幅服务于主题与内容。"
+    },
+    {
+        id: 339,
+        text: "主体是画面的视觉中心与意义中心，承载核心思想。",
+        answer: true,
+        explanation: "教案：主体是照片灵魂。"
+    },
+    {
+        id: 340,
+        text: "突出主体最常用的位置是黄金分割点或三分线交点。",
+        answer: true,
+        explanation: "教案：最佳突出位置标准。"
+    },
+    {
+        id: 341,
+        text: "陪体的作用是烘托、解释、平衡、服务主体，不能抢戏。",
+        answer: true,
+        explanation: "教案：陪体定位是辅助角色。"
+    },
+    {
+        id: 342,
+        text: "陪体在画面内通常放在四边、四角等非优势位置。",
+        answer: true,
+        explanation: "教案：陪体位置不能压过主体。"
+    },
+    {
+        id: 343,
+        text: "陪体可以在画面外，通过暗示让观众联想。",
+        answer: true,
+        explanation: "教案：间接陪体处理方式。"
+    },
+    {
+        id: 344,
+        text: "主体与陪体只能是支撑关系，不能是对比关系。",
+        answer: false,
+        explanation: "教案：可支撑、可呼应、可对比。"
+    },
+    {
+        id: 345,
+        text: "直接突出主体的方式是主体大、写实、视觉强烈。",
+        answer: true,
+        explanation: "教案：直接突出=近、大、清晰。"
+    },
+    {
+        id: 346,
+        text: "间接突出主体偏写意，主体较小，靠意境引人注意。",
+        answer: true,
+        explanation: "教案：间接突出靠氛围与位置。"
+    },
+    {
+        id: 347,
+        text: "优秀照片的起点是明确、有力、清晰的主体。",
+        answer: true,
+        explanation: "教案：好照片从好主体开始。"
+    },
+    {
+        id: 348,
+        text: "前景是位于主体之前、靠近镜头的元素，可增强空间感。",
+        answer: true,
+        explanation: "教案：前景增加层次与纵深感。"
+    },
+    {
+        id: 349,
+        text: "背景必须简洁，不能杂乱，避免喧宾夺主。",
+        answer: true,
+        explanation: "教案：背景原则是简化不抢戏。"
+    },
+    {
+        id: 350,
+        text: "简化背景的方法包括虚化法、仰拍/俯拍法、靠近法。",
+        answer: true,
+        explanation: "教案：简化背景三大实用技巧。"
+    },
+    {
+        id: 351,
+        text: "摄影构图是摄影师主观意志与审美选择的体现。",
+        answer: true,
+        explanation: "教案：构图是主观表达手段。"
+    },
+    {
+        id: 352,
+        text: "构图法则必须死记硬背，不能灵活打破。",
+        answer: false,
+        explanation: "教案：法则是工具，会用、敢破才是高手。"
+    },
+    {
+        id: 353,
+        text: "视觉路径就是观众看照片时眼睛移动的路线。",
+        answer: true,
+        explanation: "教案：视觉路径定义。"
+    },
+    {
+        id: 354,
+        text: "对角线构图属于动态线条，适合表现运动与活力。",
+        answer: true,
+        explanation: "教案：对角线为动态构图。"
+    },
+    {
+        id: 355,
+        text: "水平线放在画面正中间通常最舒服、最专业。",
+        answer: false,
+        explanation: "教案：地平线放三分线更自然。"
+    },
+    {
+        id: 356,
+        text: "框架本身在某些情况下也可以成为画面主体。",
+        answer: true,
+        explanation: "教案：框架形式感强时可作主主体。"
+    },
+    {
+        id: 357,
+        text: "心理框架来自人物肢体、姿态、手势、视线围成的空间。",
+        answer: true,
+        explanation: "教案：心理框架属于隐性框架。"
+    },
+    {
+        id: 358,
+        text: "留白越多，主体越不突出，画面越杂乱。",
+        answer: false,
+        explanation: "教案：适当留白更突出主体、更高级。"
+    },
+    {
+        id: 359,
+        text: "动静对比是通过状态差异增强画面张力。",
+        answer: true,
+        explanation: "教案：动静对比属于状态对比。"
+    },
+    {
+        id: 360,
+        text: "仰拍可以简化背景，以天空为干净留白。",
+        answer: true,
+        explanation: "教案：仰拍避杂乱实用技巧。"
+    },
+    {
+        id: 361,
+        text: "俯拍可以展现全局关系、交代环境与方位。",
+        answer: true,
+        explanation: "教案：俯拍适合交代全貌。"
+    },
+    {
+        id: 362,
+        text: "平拍接近人眼视角，自然、平和、客观。",
+        answer: true,
+        explanation: "教案：平拍视角特点。"
+    },
+    {
+        id: 363,
+        text: "倾斜构图故意打破平衡，制造紧张、不安、动感。",
+        answer: true,
+        explanation: "教案：斜拍用于特殊情绪表达。"
+    },
+    {
+        id: 364,
+        text: "拍摄方向（正面、侧面、背面）会影响画面叙事与情绪。",
+        answer: true,
+        explanation: "教案：方向决定立场与情绪。"
+    },
+    {
+        id: 365,
+        text: "正面角度展现对称、庄重、稳定，但易呆板。",
+        answer: true,
+        explanation: "教案：正面角度优缺点。"
+    },
+    {
+        id: 366,
+        text: "侧面角度突出轮廓线条，适合表现动态与剪影。",
+        answer: true,
+        explanation: "教案：侧面适合轮廓与动态。"
+    },
+    {
+        id: 367,
+        text: "斜侧面角度兼顾正面与侧面，立体感与空间感最强。",
+        answer: true,
+        explanation: "教案：斜侧是最常用自然角度。"
+    },
+    {
+        id: 368,
+        text: "背面角度制造悬念、引发想象、强化氛围。",
+        answer: true,
+        explanation: "教案：背面角度情绪价值。"
+    },
+    {
+        id: 369,
+        text: "景别（远、全、中、近、特）决定画面信息与情绪强弱。",
+        answer: true,
+        explanation: "教案：景别是叙事语言。"
+    },
+    {
+        id: 370,
+        text: "远景交代环境与规模，适合开场与铺垫氛围。",
+        answer: true,
+        explanation: "教案：远景作用。"
+    },
+    {
+        id: 371,
+        text: "全景展现主体全貌与所处环境，交代关系。",
+        answer: true,
+        explanation: "教案：全景定位。"
+    },
+    {
+        id: 372,
+        text: "中景适合表现人物互动与情节，是常用叙事景别。",
+        answer: true,
+        explanation: "教案：中景为叙事主力。"
+    },
+    {
+        id: 373,
+        text: "近景聚焦表情与情绪，传递人物内心状态。",
+        answer: true,
+        explanation: "教案：近景用于情绪表达。"
+    },
+    {
+        id: 374,
+        text: "特写放大细节，具有强调、隐喻、制造冲击的作用。",
+        answer: true,
+        explanation: "教案：特写功能。"
+    },
+    {
+        id: 375,
+        text: "空间感与立体感可通过线条透视、光影、虚实实现。",
+        answer: true,
+        explanation: "教案：塑造空间三大手段。"
+    },
+    {
+        id: 376,
+        text: "线性透视规律是近大远小、平行线向远方汇聚。",
+        answer: true,
+        explanation: "教案：透视基本规律。"
+    },
+    {
+        id: 377,
+        text: "空气透视规律是近实远虚、近浓远淡、近暖远冷。",
+        answer: true,
+        explanation: "教案：空气透视原理。"
+    },
+    {
+        id: 378,
+        text: "侧光是塑造立体感与质感的最佳光位之一。",
+        answer: true,
+        explanation: "教案：用光+构图结合知识点。"
+    },
+    {
+        id: 379,
+        text: "构图学习只需要看，不需要实践拍摄。",
+        answer: false,
+        explanation: "教案：构图必须多看+多拍+多修正。"
+    },
+    {
+        id: 380,
+        text: "室外创作需要提前策划，包含主题、场景、光线、构图。",
+        answer: true,
+        explanation: "教案：实拍课要求先策划。"
+    },
+    {
+        id: 381,
+        text: "小组创作核心价值是分工协作、沟通执行、互相配合。",
+        answer: true,
+        explanation: "教案：团队实践目标。"
+    },
+    {
+        id: 382,
+        text: "单次自动对焦（AF-S）适合静态主体与风光拍摄。",
+        answer: true,
+        explanation: "教案：对焦模式适用场景。"
+    },
+    {
+        id: 383,
+        text: "连续自动对焦（AF-C）适合运动主体、追焦拍摄。",
+        answer: true,
+        explanation: "教案：运动拍摄用连续对焦。"
+    },
+    {
+        id: 384,
+        text: "手动对焦（MF）适合弱光、微距、玻璃后、复杂反差场景。",
+        answer: true,
+        explanation: "教案：手动对焦适用情况。"
+    },
+    {
+        id: 385,
+        text: "构图最终目的是让照片更有秩序、更有表现力。",
+        answer: true,
+        explanation: "教案：构图最终目标。"
+    },
+    {
+        id: 386,
+        text: "所有构图技法都必须服务于主题表达，不能为技法而技法。",
+        answer: true,
+        explanation: "教案：技法服从内容。"
+    },
+    {
+        id: 387,
+        text: "一张好照片可以没有明确主体，只要色彩好看。",
+        answer: false,
+        explanation: "教案：主体是照片必须要素。"
+    },
+    {
+        id: 388,
+        text: "前景、中景、背景三层结构能显著增强画面空间感。",
+        answer: true,
+        explanation: "教案：三层空间结构。"
+    },
+    {
+        id: 389,
+        text: "杂乱元素进入画面会分散注意力，破坏构图。",
+        answer: true,
+        explanation: "教案：减法原则，去除干扰。"
+    },
+    {
+        id: 390,
+        text: "拍摄前观察环境、寻找线条、框架、光影是好习惯。",
+        answer: true,
+        explanation: "教案：摄影师观察训练。"
+    },
+    {
+        id: 391,
+        text: "引导线必须是直线，曲线不能作为引导线。",
+        answer: false,
+        explanation: "教案：曲线也是优秀引导线。"
+    },
+    {
+        id: 392,
+        text: "对称构图只能左右对称，不能上下对称。",
+        answer: false,
+        explanation: "教案：对称包括左右、上下、放射。"
+    },
+    {
+        id: 393,
+        text: "均衡就是稳定，稳定让观看者感到舒适安全。",
+        answer: true,
+        explanation: "教案：均衡的心理意义。"
+    },
+    {
+        id: 394,
+        text: "构图中的“点”可以是小主体、兴趣点、视觉焦点。",
+        answer: true,
+        explanation: "教案：点、线、面构图。"
+    },
+    {
+        id: 395,
+        text: "画面中的“面”指大面积色块、明暗区域、区域结构。",
+        answer: true,
+        explanation: "教案：面构成画面区块。"
+    },
+    {
+        id: 396,
+        text: "校园摄影创作应尊重环境、文明拍摄、注意安全。",
+        answer: true,
+        explanation: "教案：实践课规范与思政。"
+    },
+    {
+        id: 397,
+        text: "构图思政教育包含秩序美、审美力、责任与创新。",
+        answer: true,
+        explanation: "教案：构图课程思政目标。"
+    },
+    {
+        id: 398,
+        text: "曝光、对焦、白平衡正确，构图就一定好。",
+        answer: false,
+        explanation: "教案：技术正确≠构图优秀。"
+    },
+    {
+        id: 399,
+        text: "好的构图能让平凡题材变得有感染力、有故事。",
+        answer: true,
+        explanation: "教案：构图提升普通题材。"
+    },
+    {
+        id: 400,
+        text: "摄影构图的最高境界是有法而无定法，为表达而创造。",
+        answer: true,
+        explanation: "教案：构图学习最终追求。"
+    }
+];
+
+        const QUESTIONS_PER_SET = 5;  // 每组5道题
+
+        // ---------- 状态变量 ----------
+        // 正常顺序（原始索引数组）
+        let normalOrder = Array.from({ length: questionBank.length }, (_, i) => i);
+        // 复习模式顺序（错题原始索引）
+        let reviewOrder = [];
+        let isReviewMode = false;
+
+        // 用户答案记录（原始索引 -> true/false/null）
+        let userAnswers = new Array(questionBank.length).fill(null);
+
+        let currentSetIndex = 0;
+
+        // DOM 元素
+        const questionContainer = document.getElementById('question-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const exitReviewBtn = document.getElementById('exit-review-btn');
+        const currentSetSpan = document.getElementById('current-set');
+        const totalSetsSpan = document.getElementById('total-sets');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const answeredSpan = document.getElementById('answered');
+        const remainingSpan = document.getElementById('remaining');
+        const correctSpan = document.getElementById('correct');
+        const incorrectSpan = document.getElementById('incorrect');
+        const modeText = document.getElementById('mode-text');
+
+        // ---------- 初始化 ----------
+        function init() {
+            totalQuestionsSpan.textContent = questionBank.length;
+            updateTotalSets();
+            updateStats();
+            showCurrentSet();
+            attachEvents();
+        }
+
+        // 更新总组数（根据当前顺序长度）
+        function updateTotalSets() {
+            const currentOrder = isReviewMode ? reviewOrder : normalOrder;
+            const totalSets = Math.ceil(currentOrder.length / QUESTIONS_PER_SET);
+            totalSetsSpan.textContent = totalSets;
+        }
+
+        // 更新统计
+        function updateStats() {
+            let answered = 0;
+            let correct = 0;
+            userAnswers.forEach((ans, idx) => {
+                if (ans !== null) {
+                    answered++;
+                    if (ans === questionBank[idx].answer) correct++;
+                }
+            });
+            answeredSpan.textContent = answered;
+            remainingSpan.textContent = questionBank.length - answered;
+            correctSpan.textContent = correct;
+            incorrectSpan.textContent = answered - correct;
+        }
+
+        // 显示当前组的题目
+        function showCurrentSet() {
+            questionContainer.innerHTML = '';
+            const currentOrder = isReviewMode ? reviewOrder : normalOrder;
+            const totalSets = Math.ceil(currentOrder.length / QUESTIONS_PER_SET);
+            // 边界保护
+            if (currentSetIndex >= totalSets) currentSetIndex = Math.max(0, totalSets - 1);
+            currentSetSpan.textContent = currentSetIndex + 1;
+
+            const startIdx = currentSetIndex * QUESTIONS_PER_SET;
+            const endIdx = Math.min(startIdx + QUESTIONS_PER_SET, currentOrder.length);
+
+            for (let i = startIdx; i < endIdx; i++) {
+                const originalIndex = currentOrder[i];
+                const question = questionBank[originalIndex];
+                // 显示序号：基于当前组内的位置（从1开始）
+                const displayNumber = i - startIdx + 1;
+                const questionElement = createQuestionElement(question, originalIndex, displayNumber);
+                questionContainer.appendChild(questionElement);
+            }
+
+            // 更新导航按钮
+            prevBtn.disabled = currentSetIndex === 0;
+            nextBtn.disabled = currentSetIndex === totalSets - 1;
+
+            // 模式相关UI
+            if (isReviewMode) {
+                shuffleBtn.disabled = true;
+                restartBtn.disabled = true;
+                exitReviewBtn.classList.remove('hidden');
+                modeText.textContent = '复习错题';
+            } else {
+                shuffleBtn.disabled = false;
+                restartBtn.disabled = false;
+                exitReviewBtn.classList.add('hidden');
+                modeText.textContent = '正常练习';
+            }
+        }
+
+        // 创建题目DOM，参数：题目对象、原始索引、显示序号（1-based）
+        function createQuestionElement(question, originalIndex, displayNumber) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            questionDiv.dataset.originalIndex = originalIndex; // 方便查找
+
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = `${displayNumber}. ${question.text}`; // 使用显示序号
+            questionDiv.appendChild(questionText);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+
+            const trueOption = document.createElement('div');
+            trueOption.className = 'option';
+            trueOption.textContent = '正确';
+            trueOption.dataset.value = true;
+
+            const falseOption = document.createElement('div');
+            falseOption.className = 'option';
+            falseOption.textContent = '错误';
+            falseOption.dataset.value = false;
+
+            optionsDiv.appendChild(trueOption);
+            optionsDiv.appendChild(falseOption);
+            questionDiv.appendChild(optionsDiv);
+
+            // 解析框
+            const explanationBox = document.createElement('div');
+            explanationBox.className = 'explanation-box';
+            explanationBox.innerHTML = `
+                <div class="explanation-title">📘 解析</div>
+                <div class="explanation-content"></div>
+            `;
+            questionDiv.appendChild(explanationBox);
+
+            // 如果已经答过，显示答案状态和解析
+            const userAns = userAnswers[originalIndex];
+            if (userAns !== null) {
+                // 禁用点击
+                trueOption.classList.add('disabled-option');
+                falseOption.classList.add('disabled-option');
+                // 显示颜色
+                const isCorrect = userAns === question.answer;
+                if (userAns === true) {
+                    trueOption.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    if (!isCorrect) falseOption.classList.add('correct');
+                } else {
+                    falseOption.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    if (!isCorrect) trueOption.classList.add('correct');
+                }
+                // 显示解析
+                showExplanation(explanationBox, question, userAns);
+            } else {
+                // 未答，添加点击事件
+                trueOption.addEventListener('click', () => selectOption(question, true, originalIndex, questionDiv));
+                falseOption.addEventListener('click', () => selectOption(question, false, originalIndex, questionDiv));
+            }
+
+            return questionDiv;
+        }
+
+        // 选择答案
+        function selectOption(question, selectedValue, originalIndex, questionDiv) {
+            // 记录答案
+            userAnswers[originalIndex] = selectedValue;
+            updateStats();
+
+            // 获取该题目DOM中的选项和解析框
+            const options = questionDiv.querySelectorAll('.option');
+            const trueOption = options[0];
+            const falseOption = options[1];
+            const explanationBox = questionDiv.querySelector('.explanation-box');
+
+            // 禁用选项点击
+            trueOption.classList.add('disabled-option');
+            falseOption.classList.add('disabled-option');
+            // 移除原有的事件监听（简单方式：替换为克隆，但这里不再需要，因为已禁用点击）
+
+            // 显示正确/错误颜色
+            const isCorrect = selectedValue === question.answer;
+            if (selectedValue === true) {
+                trueOption.classList.add(isCorrect ? 'correct' : 'incorrect');
+                if (!isCorrect) falseOption.classList.add('correct');
+            } else {
+                falseOption.classList.add(isCorrect ? 'correct' : 'incorrect');
+                if (!isCorrect) trueOption.classList.add('correct');
+            }
+
+            // 显示解析
+            showExplanation(explanationBox, question, selectedValue);
+        }
+
+        // 显示解析内容
+        function showExplanation(explanationBox, question, selectedValue) {
+            const contentDiv = explanationBox.querySelector('.explanation-content');
+            const isCorrect = selectedValue === question.answer;
+            const correctAnswerText = question.answer ? '正确' : '错误';
+            const userAnswerText = selectedValue ? '正确' : '错误';
+            const resultText = isCorrect ? '✅ 回答正确' : '❌ 回答错误';
+            contentDiv.innerHTML = `
+                <p><strong>${resultText}</strong></p>
+                <p><strong>正确答案：</strong>${correctAnswerText}</p>
+                <p><strong>你的选择：</strong>${userAnswerText}</p>
+                <p>${question.explanation}</p>
+            `;
+            explanationBox.classList.add('show');
+        }
+
+        // ---------- 导航 ----------
+        function goToPrevSet() {
+            if (currentSetIndex > 0) {
+                currentSetIndex--;
+                showCurrentSet();
+            }
+        }
+
+        function goToNextSet() {
+            const currentOrder = isReviewMode ? reviewOrder : normalOrder;
+            const totalSets = Math.ceil(currentOrder.length / QUESTIONS_PER_SET);
+            if (currentSetIndex < totalSets - 1) {
+                currentSetIndex++;
+                showCurrentSet();
+            }
+        }
+
+        // ---------- 随机打乱（仅正常模式） ----------
+        function shuffleNormalOrder() {
+            if (isReviewMode) return;
+            // Fisher-Yates 洗牌
+            for (let i = normalOrder.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [normalOrder[i], normalOrder[j]] = [normalOrder[j], normalOrder[i]];
+            }
+            // 重置答题记录
+            userAnswers.fill(null);
+            currentSetIndex = 0;
+            updateStats();
+            updateTotalSets();
+            showCurrentSet();
+        }
+
+        // ---------- 错题重做（进入复习模式） ----------
+        function startReview() {
+            const wrongIndices = [];
+            userAnswers.forEach((ans, idx) => {
+                if (ans !== null && ans !== questionBank[idx].answer) {
+                    wrongIndices.push(idx);
+                }
+            });
+            if (wrongIndices.length === 0) {
+                alert('恭喜！当前没有错题。');
+                return;
+            }
+
+            reviewOrder = wrongIndices;
+            isReviewMode = true;
+            currentSetIndex = 0;
+            // 重置答题记录，准备重新练习错题
+            userAnswers.fill(null);
+            updateStats();
+            updateTotalSets();
+            showCurrentSet();
+        }
+
+        // ---------- 退出复习模式 ----------
+        function exitReview() {
+            isReviewMode = false;
+            // 返回正常模式时，可保留之前的答题记录，也可清空。这里选择保留正常模式的答题记录（不清空）
+            // 但为了统一，如果不清空，之前答过的题仍然有颜色。这符合预期。
+            // 注意：退出复习时，应该恢复到正常顺序，但用户可能之前打乱过，所以 normalOrder 保持不变。
+            currentSetIndex = 0;
+            updateTotalSets();
+            showCurrentSet();
+        }
+
+        // ---------- 事件绑定 ----------
+        function attachEvents() {
+            prevBtn.addEventListener('click', goToPrevSet);
+            nextBtn.addEventListener('click', goToNextSet);
+            shuffleBtn.addEventListener('click', shuffleNormalOrder);
+            restartBtn.addEventListener('click', startReview);
+            exitReviewBtn.addEventListener('click', exitReview);
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
